@@ -43,13 +43,13 @@ import {
   isSessionNotFoundError,
   SessionMetadataConflictError,
   SessionMetadataVersionConflictError,
-  SessionReadMarkerMessageNotFoundError,
   type SessionCatalogPageCursor,
   type SessionCatalogRecord,
   type SessionHeaderSnapshot,
   type ExecutionStoresWriter,
 } from '@maka/storage/execution-stores';
 import type { CreateStableSessionRequest } from '@maka/storage/session-store';
+import { isVisibleSessionMessage } from '@maka/storage/session-message-projection';
 import type { RuntimePolicyStoresWriter } from '@maka/storage/runtime-policy-stores';
 import {
   SessionConfigurationRevisionConflictError,
@@ -93,21 +93,33 @@ import type { SessionCatalogOperationHandlerMap } from './operation-dispatcher.j
 import type { RuntimeHostAccessAuthority } from './access-authority.js';
 import { type SessionAdmissionLease, SessionAdmissionGate } from './session-admission-gate.js';
 import type { SessionContinuityCoordinator } from './session-continuity-coordinator.js';
+import type { SessionTranscriptReader } from './session-transcript-reader.js';
 import { type HostWorkspaceResolver, WorkspaceResolutionError } from './workspace-resolver.js';
 
 type SessionCatalogStores = Pick<
   ExecutionStoresWriter<'interactive'>['sessionStore'],
   | 'createStableSession'
   | 'listCatalogPage'
-  | 'markSessionReadThroughMessage'
   | 'probeStableSessionCreate'
   | 'readCatalogRecord'
   | 'readExecutionBoundary'
   | 'readHeaderRecordSnapshot'
-  | 'readTurnContributionsSnapshot'
-  | 'readTurnLandmarksSnapshot'
   | 'updateHeaderVersioned'
 >;
+
+/** The Turn index a Session catalog page is built from, read off the ledger. */
+type SessionTurnIndexReader = Pick<
+  SessionTranscriptReader,
+  'readDurableRecords' | 'readDurableTurnContributions' | 'readDurableTurnLandmarks'
+>;
+
+/**
+ * How far back a read marker looks for the newest visible message. A Turn ends
+ * on its assistant text, so the tail of one run is enough; the bound only keeps
+ * a run of pure tool traffic from walking the whole ledger.
+ */
+const SESSION_READ_MARKER_TAIL_MAX_MESSAGES = 64;
+const SESSION_READ_MARKER_TAIL_MAX_BYTES = 256 * 1024;
 
 type SessionRuntimePolicyStores = {
   readonly connectionCatalog: Pick<RuntimePolicyStoresWriter['connectionCatalog'], 'getSnapshot'>;
@@ -151,6 +163,7 @@ export class SessionOperationFailure extends Error {
 
 export interface HostSessionCatalogCoordinatorOptions {
   readonly stores: SessionCatalogStores;
+  readonly turnIndex: SessionTurnIndexReader;
   readonly runtimePolicy: SessionRuntimePolicyStores;
   readonly manager: SessionConfigurationAuthority;
   readonly admission: SessionAdmissionGate;
@@ -185,6 +198,7 @@ export class HostSessionCatalogCoordinator {
   };
 
   readonly #stores: SessionCatalogStores;
+  readonly #turnIndex: SessionTurnIndexReader;
   readonly #runtimePolicy: SessionRuntimePolicyStores;
   readonly #manager: SessionConfigurationAuthority;
   readonly #admission: SessionAdmissionGate;
@@ -197,6 +211,7 @@ export class HostSessionCatalogCoordinator {
 
   constructor(options: HostSessionCatalogCoordinatorOptions) {
     this.#stores = options.stores;
+    this.#turnIndex = options.turnIndex;
     this.#runtimePolicy = options.runtimePolicy;
     this.#manager = options.manager;
     this.#admission = options.admission;
@@ -374,7 +389,7 @@ export class HostSessionCatalogCoordinator {
       let maxContributions = input.maxContributions;
       let throughSequence = input.throughSequence;
       while (true) {
-        const page = await this.#stores.readTurnContributionsSnapshot(
+        const page = await this.#turnIndex.readDurableTurnContributions(
           input.sessionId,
           throughSequence,
           input.position,
@@ -414,7 +429,7 @@ export class HostSessionCatalogCoordinator {
     input: SessionTurnLandmarksQueryInput,
   ): Promise<OperationOutcome<'session.turn_landmarks.query'>> {
     try {
-      const snapshot = await this.#stores.readTurnLandmarksSnapshot(
+      const snapshot = await this.#turnIndex.readDurableTurnLandmarks(
         input.sessionId,
         input.maxLandmarks,
       );
@@ -706,10 +721,7 @@ export class HostSessionCatalogCoordinator {
             'WorkHub Coordination Session read state requires WorkHub authority',
           );
         }
-        await this.#stores.markSessionReadThroughMessage(
-          input.sessionId,
-          input.readThroughMessageId,
-        );
+        await this.#clearUnreadAtTranscriptTail(current, input.readThroughMessageId);
         await this.#continuity.refreshCanonical(input.sessionId, lease);
         return {
           ok: true,
@@ -719,9 +731,6 @@ export class HostSessionCatalogCoordinator {
         };
       } catch (error) {
         if (isNotFound(error)) return readMarkerFailure('not_found', 'Session does not exist');
-        if (error instanceof SessionReadMarkerMessageNotFoundError) {
-          return readMarkerFailure('invalid_request', error.message);
-        }
         if (error instanceof SessionMetadataVersionConflictError) {
           return readMarkerFailure(
             'operation_conflict',
@@ -735,6 +744,32 @@ export class HostSessionCatalogCoordinator {
         );
       }
     });
+  }
+
+  /**
+   * A Session is read once the client has caught up with the ledger's newest
+   * visible message. `hasUnread` is the only thing the marker decides and every
+   * Turn raises it again, so a client still behind the tail changes nothing.
+   */
+  async #clearUnreadAtTranscriptTail(
+    record: SessionHeaderSnapshot,
+    readThroughMessageId: string,
+  ): Promise<void> {
+    const tail = await this.#turnIndex.readDurableRecords(record.header.id, {
+      direction: 'older',
+      maxMessages: SESSION_READ_MARKER_TAIL_MAX_MESSAGES,
+      maxStoredBytes: SESSION_READ_MARKER_TAIL_MAX_BYTES,
+    });
+    const latest = tail.records.find(({ message }) => isVisibleSessionMessage(message));
+    if (latest?.message.id !== readThroughMessageId) return;
+    if (record.header.lastReadMessageId === readThroughMessageId && !record.header.hasUnread) {
+      return;
+    }
+    await this.#stores.updateHeaderVersioned(
+      record.header.id,
+      { lastReadMessageId: readThroughMessageId, hasUnread: false },
+      record.revision,
+    );
   }
 
   async #committedUpdate(

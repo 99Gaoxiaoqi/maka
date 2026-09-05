@@ -87,6 +87,7 @@ import { buildLlmHistorySummarizer } from '../history-compact-summarizer.js';
 import { createToolResultArchiveCapability } from '../tool-result-archive-capability.js';
 import {
   createTestAiSdkBackend,
+  projectedTranscriptOf,
   readExternalExecutionBoundary,
   testToolResultArchive,
 } from './execution-boundary-test-helpers.js';
@@ -108,7 +109,6 @@ describe('AiSdkBackend ApplyPatch routing', () => {
       const backend = createTestAiSdkBackend({
         sessionId: 'session-1',
         header: header(),
-        appendMessage: async () => {},
         connection:
           providerType === 'openai'
             ? { ...connection(), slug: 'openai', providerType }
@@ -138,7 +138,6 @@ describe('AiSdkBackend ApplyPatch routing', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: {
         ...connection(),
         slug: 'deepseek',
@@ -170,7 +169,6 @@ describe('AiSdkBackend ApplyPatch routing', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: { ...connection(), slug: 'openai', providerType: 'openai' },
       apiKey: 'sk-test',
       modelId: 'gpt-5.4',
@@ -242,7 +240,6 @@ describe('AiSdkBackend ApplyPatch routing', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: targetConnection,
       apiKey: 'sk-test',
       modelId,
@@ -343,7 +340,6 @@ describe('AiSdkBackend ApplyPatch routing', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -415,7 +411,6 @@ describe('AiSdkBackend ApplyPatch routing', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: { ...connection(), slug: 'openai', providerType: 'openai' },
       apiKey: 'sk-test',
       modelId: 'gpt-5.4',
@@ -499,7 +494,6 @@ describe('AiSdkBackend ApplyPatch routing', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: { ...connection(), slug: 'openai', providerType: 'openai' },
       apiKey: 'sk-test',
       modelId: 'gpt-5.4',
@@ -632,7 +626,6 @@ describe('AiSdkBackend Memory Extraction triggers', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -713,7 +706,6 @@ describe('AiSdkBackend Memory Extraction triggers', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: { ...connection(), providerType: 'openai' },
       apiKey: 'sk-test',
       modelId: 'gpt-5.4',
@@ -788,7 +780,6 @@ describe('AiSdkBackend Memory Extraction triggers', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -879,7 +870,6 @@ describe('AiSdkBackend Memory Extraction triggers', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -962,7 +952,6 @@ describe('AiSdkBackend Memory Extraction triggers', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -1079,7 +1068,6 @@ describe('AiSdkBackend sandbox boundary convergence', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: { ...header(), cwd, workspaceRoot: cwd },
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -1229,7 +1217,6 @@ describe('AiSdkBackend sandbox boundary convergence', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -1352,7 +1339,6 @@ describe('AiSdkBackend sandbox boundary convergence', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -1559,7 +1545,6 @@ describe('AiSdkBackend model history', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: {
         slug: 'kimi-coding-plan',
         providerType: 'kimi-coding-plan',
@@ -1590,7 +1575,6 @@ describe('AiSdkBackend model history', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: {
         slug: 'kimi-coding-plan',
         providerType: 'kimi-coding-plan',
@@ -1627,7 +1611,6 @@ describe('AiSdkBackend model history', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: {
         slug: 'mistral',
         providerType: 'mistral',
@@ -1657,7 +1640,6 @@ describe('AiSdkBackend model history', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -1720,7 +1702,6 @@ describe('AiSdkBackend model history', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -1765,7 +1746,6 @@ describe('AiSdkBackend model history', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -1818,7 +1798,6 @@ describe('AiSdkBackend model history', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -1878,7 +1857,6 @@ describe('AiSdkBackend model history', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: { ...connection(), providerType: 'openai' },
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -1928,7 +1906,6 @@ describe('AiSdkBackend model history', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -2021,7 +1998,6 @@ describe('AiSdkBackend model history', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -2072,7 +2048,6 @@ describe('AiSdkBackend model history', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -2139,7 +2114,6 @@ describe('AiSdkBackend model history', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -2192,7 +2166,6 @@ describe('AiSdkBackend model history', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -2260,7 +2233,6 @@ describe('AiSdkBackend model history', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -2324,7 +2296,6 @@ describe('AiSdkBackend model history', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -2392,7 +2363,6 @@ describe('AiSdkBackend model history', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -2445,7 +2415,6 @@ describe('AiSdkBackend model history', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -2496,7 +2465,6 @@ describe('AiSdkBackend model history', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -2540,7 +2508,6 @@ describe('AiSdkBackend model history', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -2590,7 +2557,6 @@ describe('AiSdkBackend model history', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -2679,7 +2645,6 @@ describe('AiSdkBackend model history', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -2717,7 +2682,6 @@ describe('AiSdkBackend model history', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -2810,7 +2774,6 @@ describe('AiSdkBackend model history', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -2912,7 +2875,6 @@ describe('AiSdkBackend model history', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -2979,7 +2941,6 @@ describe('AiSdkBackend model history', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -3085,7 +3046,6 @@ describe('AiSdkBackend model history', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -3168,7 +3128,6 @@ describe('AiSdkBackend model history', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -3377,7 +3336,6 @@ describe('AiSdkBackend model history', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: {
         slug: 'deepseek',
         providerType: 'deepseek',
@@ -3461,7 +3419,6 @@ describe('AiSdkBackend model history', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: {
         slug: 'deepseek',
         providerType: 'deepseek',
@@ -3575,7 +3532,6 @@ describe('AiSdkBackend model history', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -3701,7 +3657,6 @@ describe('AiSdkBackend model history', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -3839,7 +3794,6 @@ describe('AiSdkBackend model history', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -4000,7 +3954,6 @@ describe('AiSdkBackend model history', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -4283,7 +4236,6 @@ describe('AiSdkBackend model history', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -4333,7 +4285,6 @@ describe('AiSdkBackend model history', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -4426,7 +4377,6 @@ describe('AiSdkBackend model history', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: { ...header(), llmConnectionId: 'test-connection-id', model: 'mock-model-id' },
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -4499,7 +4449,6 @@ describe('AiSdkBackend model history', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -4569,7 +4518,6 @@ describe('AiSdkBackend model history', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -4649,7 +4597,6 @@ describe('AiSdkBackend model history', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -4735,7 +4682,6 @@ describe('AiSdkBackend model history', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -4775,7 +4721,6 @@ describe('AiSdkBackend model history', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -4828,7 +4773,6 @@ describe('AiSdkBackend model history', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -4885,7 +4829,6 @@ describe('AiSdkBackend model history', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -4986,7 +4929,6 @@ describe('AiSdkBackend model history', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -5071,7 +5013,6 @@ describe('AiSdkBackend model history', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -5183,7 +5124,6 @@ describe('AiSdkBackend model history', () => {
         const backendInput: AiSdkBackendInput = {
           sessionId: 'session-1',
           header: header(),
-          appendMessage: async () => {},
           connection: connection(),
           apiKey: 'sk-test',
           modelId: 'mock-model-id',
@@ -5248,7 +5188,6 @@ describe('AiSdkBackend model history', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -5286,7 +5225,6 @@ describe('AiSdkBackend model history', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -5351,7 +5289,6 @@ describe('AiSdkBackend model history', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -5392,7 +5329,6 @@ describe('AiSdkBackend model history', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -5538,7 +5474,6 @@ describe('AiSdkBackend model history', () => {
     backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -5572,8 +5507,9 @@ describe('AiSdkBackend model history', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async (message) => {
-        if (message.type !== 'token_usage') return;
+      // The usage checkpoint is the persistence this turn awaits at its step
+      // boundary, so holding it here is the window the stop has to win.
+      recordUsageCheckpoint: async () => {
         usagePersistenceStarted = true;
         await gate.promise;
       },
@@ -5774,7 +5710,6 @@ describe('AiSdkBackend model history', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: codexConnection,
       apiKey: 'codex-token',
       modelId: 'mock-model-id',
@@ -5842,7 +5777,6 @@ describe('AiSdkBackend model history', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: codexConnection,
       apiKey: 'codex-token',
       modelId: 'mock-model-id',
@@ -5934,7 +5868,6 @@ describe('AiSdkBackend model history', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: codexConnection,
       apiKey: 'codex-token',
       modelId: 'mock-model-id',
@@ -6027,7 +5960,6 @@ describe('AiSdkBackend model history', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: codexConnection,
       apiKey: 'codex-token',
       modelId: 'mock-model-id',
@@ -6062,7 +5994,6 @@ describe('AiSdkBackend model history', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -6134,7 +6065,6 @@ describe('AiSdkBackend model history', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -6194,7 +6124,6 @@ describe('AiSdkBackend model history', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: openAiConnection,
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -6265,7 +6194,6 @@ describe('AiSdkBackend model history', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: { ...header(), llmConnectionId: 'connection-a', model: 'claude-b' },
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'claude-b',
@@ -6349,7 +6277,6 @@ describe('AiSdkBackend model history', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: { ...header(), llmConnectionId: 'connection-a', model: 'claude-a' },
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'claude-a',
@@ -6402,7 +6329,6 @@ describe('AiSdkBackend model history', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: { ...header(), llmConnectionId: 'connection-a', model: 'claude-a' },
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'claude-a',
@@ -6463,7 +6389,6 @@ describe('AiSdkBackend model history', () => {
         llmConnectionSlug: 'github-copilot',
         model: 'gpt-5.4',
       },
-      appendMessage: async () => {},
       connection: copilotConnection,
       apiKey: 'sk-test',
       modelId: 'gpt-5.4',
@@ -6557,7 +6482,6 @@ describe('AiSdkBackend model history', () => {
         llmConnectionSlug: 'openai-main',
         model: 'gpt-5.4',
       },
-      appendMessage: async () => {},
       connection: openAiConnection,
       apiKey: 'sk-test',
       modelId: 'gpt-5.4',
@@ -6610,7 +6534,6 @@ describe('AiSdkBackend model history', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: { ...connection(), providerType: 'openai' },
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -6680,7 +6603,6 @@ describe('AiSdkBackend model history', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: {
         ...connection(),
         slug: 'kimi-main',
@@ -6761,7 +6683,6 @@ describe('AiSdkBackend model history', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: { ...connection(), providerType: 'openai' },
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -6823,7 +6744,6 @@ describe('AiSdkBackend error surfaces', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-live-secret-token-value',
       modelId: 'claude-sonnet-4-5-20250929',
@@ -7220,7 +7140,6 @@ describe('AiSdkBackend usage telemetry', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -7276,7 +7195,6 @@ describe('AiSdkBackend usage telemetry', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -7337,7 +7255,6 @@ describe('AiSdkBackend usage telemetry', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -7389,7 +7306,6 @@ describe('AiSdkBackend usage telemetry', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -7437,7 +7353,6 @@ describe('AiSdkBackend usage telemetry', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -7474,7 +7389,6 @@ describe('AiSdkBackend usage telemetry', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -7511,7 +7425,6 @@ describe('AiSdkBackend usage telemetry', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -7583,7 +7496,6 @@ describe('AiSdkBackend usage telemetry', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: { ...header(), collaborationMode: 'agent' },
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -7649,7 +7561,6 @@ describe('AiSdkBackend usage telemetry', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -7746,7 +7657,6 @@ describe('AiSdkBackend usage telemetry', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -7858,7 +7768,6 @@ describe('AiSdkBackend usage telemetry', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -8148,7 +8057,6 @@ describe('AiSdkBackend usage telemetry', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -8194,7 +8102,6 @@ describe('AiSdkBackend usage telemetry', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'unpriced-model',
@@ -8275,7 +8182,6 @@ describe('AiSdkBackend usage telemetry', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -8766,7 +8672,6 @@ describe('AiSdkBackend tool availability diagnostics', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -8842,7 +8747,6 @@ describe('AiSdkBackend tool availability diagnostics', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -8933,7 +8837,6 @@ describe('AiSdkBackend context budget and prompt attribution', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -9099,7 +9002,6 @@ describe('AiSdkBackend RunTrace', () => {
       const backend = createTestAiSdkBackend({
         sessionId: 'session-1',
         header: header(),
-        appendMessage: async () => {},
         connection: connection(),
         apiKey: 'sk-test',
         modelId: 'mock-model-id',
@@ -9171,7 +9073,6 @@ describe('AiSdkBackend RunTrace', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: {
         ...connection(),
         models: [{ id: 'mock-model-id', contextWindow: 200_000 }],
@@ -9348,7 +9249,6 @@ describe('AiSdkBackend RunTrace', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -9409,7 +9309,6 @@ describe('AiSdkBackend RunTrace', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -9672,7 +9571,6 @@ describe('AiSdkBackend RunTrace', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -9816,7 +9714,6 @@ describe('AiSdkBackend RunTrace', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -9890,7 +9787,6 @@ describe('AiSdkBackend RunTrace', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: {
         ...connection(),
         slug: 'deepseek',
@@ -9926,59 +9822,6 @@ describe('AiSdkBackend RunTrace', () => {
       false,
     );
     assert.equal(events.find((event) => event.type === 'complete')?.stopReason, 'end_turn');
-  });
-
-  test('does not report a consumed idle timeout for a later assistant append failure', async () => {
-    const timers = manualWatchdogTimer();
-    let calls = 0;
-    const model = new MockLanguageModelV4({
-      doStream: async (options) => {
-        calls += 1;
-        return {
-          stream: hangingProviderStream(
-            [
-              { type: 'stream-start', warnings: [] },
-              { type: 'reasoning-start', id: 'reasoning-1' },
-              {
-                type: 'reasoning-delta',
-                id: 'reasoning-1',
-                delta: 'partial thought',
-              },
-            ],
-            options.abortSignal,
-          ),
-        };
-      },
-    });
-    const backend = createTestAiSdkBackend({
-      sessionId: 'session-1',
-      header: header(),
-      appendMessage: async () => {
-        throw new Error('assistant append failed');
-      },
-      connection: connection(),
-      apiKey: 'sk-test',
-      modelId: 'mock-model-id',
-      modelFactory: () => model,
-      tools: [],
-      newId: idGenerator(),
-      now: monotonicClock(),
-      streamWatchdogTimer: timers.clock,
-      providerRetrySleep: async () => {},
-    });
-
-    const events: SessionEvent[] = [];
-    for await (const event of backend.send({ turnId: 'turn-1', text: 'hi', context: [] })) {
-      events.push(event);
-      if (event.type === 'thinking_delta' && event.text === 'partial thought') timers.fire();
-    }
-
-    assert.equal(calls, 1);
-    const error = events.find((event) => event.type === 'error');
-    assert.equal(error?.type, 'error');
-    assert.notEqual(error?.type === 'error' ? error.reason : undefined, 'timeout');
-    assert.equal(error?.type === 'error' ? error.message : undefined, 'Operation failed');
-    assert.equal(events.find((event) => event.type === 'complete')?.stopReason, 'error');
   });
 
   test('links a recovered tool call to the retry assistant step', async () => {
@@ -10056,7 +9899,6 @@ describe('AiSdkBackend RunTrace', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -10120,7 +9962,6 @@ describe('AiSdkBackend RunTrace', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -10200,7 +10041,6 @@ describe('AiSdkBackend RunTrace', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -10272,7 +10112,6 @@ describe('AiSdkBackend RunTrace', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -10330,7 +10169,6 @@ describe('AiSdkBackend RunTrace', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -10488,7 +10326,6 @@ describe('AiSdkBackend RunTrace', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -10548,7 +10385,6 @@ describe('AiSdkBackend RunTrace', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -10603,7 +10439,6 @@ describe('AiSdkBackend RunTrace', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -10640,7 +10475,6 @@ describe('AiSdkBackend RunTrace', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -10724,7 +10558,6 @@ describe('AiSdkBackend RunTrace', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -10769,7 +10602,6 @@ describe('AiSdkBackend RunTrace', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -10852,7 +10684,6 @@ describe('AiSdkBackend RunTrace', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -10929,7 +10760,6 @@ describe('AiSdkBackend RunTrace', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -10959,7 +10789,6 @@ describe('AiSdkBackend RunTrace', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'claude-sonnet-4-5-20250929',
@@ -10997,7 +10826,6 @@ describe('AiSdkBackend tool execution', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header('bypass'),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'claude-sonnet-4-5-20250929',
@@ -11094,7 +10922,6 @@ describe('AiSdkBackend tool execution', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header('ask'),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'claude-sonnet-4-5-20250929',
@@ -11158,7 +10985,6 @@ describe('AiSdkBackend tool execution', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header('explore'),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'claude-sonnet-4-5-20250929',
@@ -11221,7 +11047,6 @@ describe('AiSdkBackend tool execution', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header('explore'),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'claude-sonnet-4-5-20250929',
@@ -11320,7 +11145,6 @@ describe('AiSdkBackend tool execution', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header('bypass'),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'claude-sonnet-4-5-20250929',
@@ -11642,7 +11466,6 @@ describe('AiSdkBackend concurrent turns', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -11703,7 +11526,6 @@ describe('AiSdkBackend concurrent turns', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -11746,7 +11568,6 @@ describe('AiSdkBackend concurrent turns', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -11883,7 +11704,6 @@ describe('AiSdkBackend thinking persistence', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -12070,7 +11890,6 @@ describe('AiSdkBackend thinking persistence', () => {
     const firstBackend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: openCodeClaudeConnection,
       apiKey: 'sk-test',
       modelId: 'claude-opus-4-8',
@@ -12117,7 +11936,6 @@ describe('AiSdkBackend thinking persistence', () => {
     const secondBackend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: openCodeClaudeConnection,
       apiKey: 'sk-test',
       modelId: 'claude-opus-4-8',
@@ -12218,7 +12036,6 @@ describe('AiSdkBackend thinking persistence', () => {
     const secondBackend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -12338,7 +12155,6 @@ describe('AiSdkBackend thinking persistence', () => {
         const secondBackend = createTestAiSdkBackend({
           sessionId: 'session-1',
           header: header(),
-          appendMessage: async () => {},
           connection: {
             slug: 'openai',
             providerType: 'openai',
@@ -12490,7 +12306,6 @@ describe('AiSdkBackend thinking persistence', () => {
     const secondBackend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: {
         slug: 'volcengine-agent-plan',
         providerType: 'volcengine-agent-plan',
@@ -12601,7 +12416,6 @@ describe('AiSdkBackend thinking persistence', () => {
     const secondBackend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: {
         slug: 'deepseek',
         providerType: 'deepseek',
@@ -12753,7 +12567,6 @@ describe('AiSdkBackend thinking persistence', () => {
     const firstBackend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: tokenPlanConnection,
       apiKey: 'alibaba-token',
       modelId: 'qwen3.8-max',
@@ -12821,7 +12634,6 @@ describe('AiSdkBackend thinking persistence', () => {
     const secondBackend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: tokenPlanConnection,
       apiKey: 'alibaba-token',
       modelId: 'qwen3.8-max',
@@ -12956,7 +12768,6 @@ describe('AiSdkBackend thinking persistence', () => {
     const recoveryBackend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: {
         slug: 'alibaba-token-plan-cn',
         providerType: 'alibaba-token-plan-cn',
@@ -13167,7 +12978,6 @@ describe('AiSdkBackend thinking persistence', () => {
     const recoveryBackend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection,
       apiKey: 'alibaba-token',
       modelId: 'qwen3.8-max',
@@ -13312,7 +13122,6 @@ describe('AiSdkBackend thinking persistence', () => {
     const recoveryBackend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection,
       apiKey: 'alibaba-token',
       modelId: 'qwen3.8-max',
@@ -13352,7 +13161,6 @@ describe('AiSdkBackend thinking persistence', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: {
         slug: 'alibaba-token-plan-cn',
         providerType: 'alibaba-token-plan-cn',
@@ -13443,7 +13251,6 @@ describe('AiSdkBackend thinking persistence', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: {
         slug: 'alibaba-token-plan-cn',
         providerType: 'alibaba-token-plan-cn',
@@ -13519,7 +13326,6 @@ describe('AiSdkBackend thinking persistence', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: { ...header(), thinkingLevel: 'max' },
-      appendMessage: async () => {},
       connection: {
         slug: 'deepseek',
         providerType: 'deepseek',
@@ -13701,7 +13507,6 @@ describe('AiSdkBackend thinking persistence', () => {
     const secondBackend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: planConnection,
       apiKey: 'ark-plan-token',
       modelId: 'ark-code-latest',
@@ -13809,7 +13614,6 @@ describe('AiSdkBackend thinking persistence', () => {
     const secondBackend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -13920,7 +13724,6 @@ describe('AiSdkBackend thinking persistence', () => {
     const secondBackend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -14040,7 +13843,6 @@ describe('AiSdkBackend thinking persistence', () => {
     const secondBackend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -14350,7 +14152,6 @@ describe('AiSdkBackend thinking persistence', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: {
         slug: 'openai-main',
         providerType: 'openai',
@@ -14391,7 +14192,6 @@ describe('AiSdkBackend steering durability and identity', () => {
     createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -14968,7 +14768,6 @@ describe('AiSdkBackend steering durability and identity', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -15065,7 +14864,6 @@ describe('AiSdkBackend steering durability and identity', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -15542,7 +15340,6 @@ describe('AiSdkBackend steering durability and identity', () => {
     const backend = createTestAiSdkBackend({
       sessionId: 'session-1',
       header: header(),
-      appendMessage: async () => {},
       connection: connection(),
       apiKey: 'sk-test',
       modelId: 'mock-model-id',
@@ -15667,7 +15464,6 @@ function imageReplayBackend(
   return createTestAiSdkBackend({
     sessionId: 'session-1',
     header: header(),
-    appendMessage: async () => {},
     connection: connection(),
     apiKey: 'sk-test',
     modelId: 'mock-model-id',
@@ -15776,7 +15572,6 @@ async function runPlanToolBoundary(input: {
   const backend = createTestAiSdkBackend({
     sessionId: 'session-1',
     header: header(),
-    appendMessage: async () => {},
     connection: connection(),
     apiKey: 'sk-test',
     modelId: 'mock-model-id',
@@ -15960,7 +15755,6 @@ async function replayPrompt(
   const backend = createTestAiSdkBackend({
     sessionId: 'session-1',
     header: header(),
-    appendMessage: async () => {},
     connection: connection(),
     apiKey: 'sk-test',
     modelId: 'mock-model-id',
@@ -16353,9 +16147,18 @@ function runtimeExecute(
   eventSink: { push(event: SessionEvent): void },
 ) {
   const runtime = turnScope(backend, turnId).toolRuntime;
+  // This drives the tool runtime beneath `send()`, so the stream that becomes
+  // the ledger is teed here instead.
+  const project = projectedTranscriptOf(backend);
   const durableEventSink: DurableSessionEventSink = {
-    push: (event) => eventSink.push(event),
-    pushAndWaitUntilConsumed: async (event) => eventSink.push(event),
+    push: (event) => {
+      eventSink.push(event);
+      void project?.(event, turnId);
+    },
+    pushAndWaitUntilConsumed: async (event) => {
+      eventSink.push(event);
+      await project?.(event, turnId);
+    },
   };
   return async (
     input: unknown,

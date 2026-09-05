@@ -106,6 +106,7 @@ import type { SessionContinuityFrameSink } from '../server/session-continuity-se
 import { HostTurnControlCoordinator } from '../server/turn-control-coordinator.js';
 import { RuntimePolicyActivationGate } from '../server/runtime-policy-activation-gate.js';
 import { PROCESS_TIMEOUT_MS } from './fixtures/execution-host-suite.js';
+import { readLedgerMessages } from './fixtures/ledger-transcript.js';
 import { waitFor } from '@maka/core/test-only/async-primitives';
 
 const HOLD_EXTERNAL_PROMPT = 'hold external root before follow-up';
@@ -404,9 +405,9 @@ test('uses the submitted Turn identity for the canonical external user message',
     assertStartedTurn(started);
     await fixture.coordinator.whenIdle(fixture.sessionId);
 
-    const user = (await fixture.stores.sessionStore.readMessages(fixture.sessionId)).find(
-      (message) => message.type === 'user' && message.turnId === turnId,
-    );
+    const user = (
+      await readLedgerMessages(fixture.stores.runtimeEventStore, fixture.sessionId)
+    ).find((message) => message.type === 'user' && message.turnId === turnId);
     assert.equal(user?.id, turnId);
   } finally {
     await fixture.coordinator.close();
@@ -474,7 +475,7 @@ test('startup recovery replays one admitted safe-boundary continuation without a
       'completed',
     );
     assert.equal(
-      (await fixture.stores.sessionStore.readMessages(fixture.sessionId)).some(
+      (await readLedgerMessages(fixture.stores.runtimeEventStore, fixture.sessionId)).some(
         (message) => message.type === 'user' && message.turnId === pending.targetTurnId,
       ),
       false,
@@ -515,14 +516,6 @@ test('startup recovery closes a ScheduledTask Run after its pending fire was set
       admittedAt,
     });
     assert.equal(admission.kind, 'admitted');
-    await fixture.stores.sessionStore.appendMessage(fixture.sessionId, {
-      type: 'user',
-      id: userMessageId,
-      turnId,
-      ts: admittedAt,
-      text: 'Continue the scheduled work.',
-      origin: { kind: 'scheduled_task', scheduledTaskId: 'task-settled-fire' },
-    });
     await seedInvocation(fixture.stores.runtimeEventStore, {
       sessionId: fixture.sessionId,
       invocationId: runId,
@@ -546,6 +539,22 @@ test('startup recovery closes a ScheduledTask Run after its pending fire was set
           toolMode: 'direct',
         },
         root: { kind: 'scheduled_task', scheduledTaskId: 'task-settled-fire' },
+      },
+    });
+    await fixture.stores.runtimeEventStore.appendRuntimeEvent(fixture.sessionId, runId, {
+      id: userMessageId,
+      sessionId: fixture.sessionId,
+      invocationId: runId,
+      runId,
+      turnId,
+      ts: admittedAt,
+      partial: false,
+      role: 'user',
+      author: 'host',
+      content: {
+        kind: 'text',
+        text: 'Continue the scheduled work.',
+        origin: { kind: 'scheduled_task', scheduledTaskId: 'task-settled-fire' },
       },
     });
 
@@ -692,7 +701,7 @@ test('a failed exact Capability retry does not poison the parked continuation bi
       1,
     );
     assert.equal(
-      (await fixture.stores.sessionStore.readMessages(fixture.sessionId)).filter(
+      (await readLedgerMessages(fixture.stores.runtimeEventStore, fixture.sessionId)).filter(
         (message) => message.type === 'user' && message.turnId === pending.targetTurnId,
       ).length,
       0,
@@ -1297,7 +1306,10 @@ test('idle Skill admission persists a canonical draft without history before roo
       displayText: '/skill:writer Draft this.',
       inlineReferences: [],
     });
-    assert.deepEqual(await fixture.stores.sessionStore.readMessages(fixture.sessionId), []);
+    assert.deepEqual(
+      await readLedgerMessages(fixture.stores.runtimeEventStore, fixture.sessionId),
+      [],
+    );
   } finally {
     await fixture.dispose();
   }
@@ -2108,9 +2120,9 @@ test('Agent Graph supervisor wake waits for root idle and binds one durable exec
     });
     assert.equal(graphRun.opening.configuration.orchestrationMode, 'graph');
     assert.equal(graphRun.opening.configuration.orchestrationSource, 'turn_override');
-    const userMessage = (await fixture.stores.sessionStore.readMessages(fixture.sessionId)).find(
-      (message) => message.id === graphAdmission?.userMessageId,
-    );
+    const userMessage = (
+      await readLedgerMessages(fixture.stores.runtimeEventStore, fixture.sessionId)
+    ).find((message) => message.id === graphAdmission?.userMessageId);
     assert.ok(userMessage?.type === 'user');
     if (userMessage?.type === 'user') {
       assert.deepEqual(userMessage.origin, {
@@ -2295,7 +2307,7 @@ test('manual context compact uses durable root query, stop, and exact retry auth
     assert.deepEqual(admission?.execution, { kind: 'context_compact' });
     assert.equal(admission?.userMessageId, null);
     assert.equal(
-      (await fixture.stores.sessionStore.readMessages(fixture.sessionId)).some(
+      (await readLedgerMessages(fixture.stores.runtimeEventStore, fixture.sessionId)).some(
         (message) => message.type === 'user' && message.turnId === turnId,
       ),
       false,
@@ -2516,7 +2528,10 @@ test('Agent Graph supervisor wake revalidates freshness before durable root admi
       await fixture.stores.runtimeEventStore.listSessionInvocations(fixture.sessionId),
       [],
     );
-    assert.deepEqual(await fixture.stores.sessionStore.readMessages(fixture.sessionId), []);
+    assert.deepEqual(
+      await readLedgerMessages(fixture.stores.runtimeEventStore, fixture.sessionId),
+      [],
+    );
     assert.equal(fixture.drainRequested(), false);
   } finally {
     await fixture.coordinator.close();
@@ -2574,9 +2589,9 @@ test('Agent Graph supervisor recovery closes a durable admission that has no Run
     });
     assert.equal(run.opening.configuration.orchestrationMode, 'graph');
     assert.equal(run.opening.configuration.orchestrationSource, 'turn_override');
-    const message = (await fixture.stores.sessionStore.readMessages(fixture.sessionId)).find(
-      (candidate) => candidate.id === userMessageId,
-    );
+    const message = (
+      await readLedgerMessages(fixture.stores.runtimeEventStore, fixture.sessionId)
+    ).find((candidate) => candidate.id === userMessageId);
     assert.ok(message?.type === 'user');
     if (message?.type === 'user') {
       assert.deepEqual(message.origin, {
@@ -3690,7 +3705,7 @@ test('mixed-Client queued follow-ups use separate Session successors without con
       [[], ['followup-from-provider-b'], ['followup-from-provider-a']],
     );
     assert.deepEqual(
-      (await fixture.stores.sessionStore.readMessages(fixture.sessionId))
+      (await readLedgerMessages(fixture.stores.runtimeEventStore, fixture.sessionId))
         .filter((message) => message.type === 'user' && message.id.startsWith('followup-from-'))
         .map((message) => message.id),
       ['followup-from-provider-b', 'followup-from-provider-a'],
@@ -5467,9 +5482,9 @@ test('directory references enforce Host identity without reading the filesystem'
     );
     assert.equal(accepted.ok, true, JSON.stringify(accepted));
     await fixture.coordinator.whenIdle(fixture.sessionId);
-    const user = (await fixture.stores.sessionStore.readMessages(fixture.sessionId)).find(
-      (message) => message.type === 'user' && message.id === 'local-directory',
-    );
+    const user = (
+      await readLedgerMessages(fixture.stores.runtimeEventStore, fixture.sessionId)
+    ).find((message) => message.type === 'user' && message.id === 'local-directory');
     assert.equal(user?.type, 'user');
     if (user?.type !== 'user') throw new Error('Expected directory user message');
     assert.equal(user.text, 'inspect local directory');
@@ -5530,7 +5545,7 @@ test('turn start and regeneration preserve one Host-bound directory reference', 
       assert.deepEqual(input.directoryReferences, [reference]);
     }
     const regeneratedUser = (
-      await fixture.stores.sessionStore.readMessages(fixture.sessionId)
+      await readLedgerMessages(fixture.stores.runtimeEventStore, fixture.sessionId)
     ).find((message) => message.type === 'user' && message.turnId === 'directory-regenerated');
     assert.equal(regeneratedUser?.type, 'user');
     if (regeneratedUser?.type !== 'user') throw new Error('Expected regenerated user message');
@@ -5607,16 +5622,19 @@ test('queued directory references survive text editing and next-Turn delivery', 
     release.resolve();
     await fixture.coordinator.whenIdle(fixture.sessionId);
     await waitUntil(async () =>
-      (await fixture.stores.sessionStore.readMessages(fixture.sessionId)).some(
+      (await readLedgerMessages(fixture.stores.runtimeEventStore, fixture.sessionId)).some(
         (message) => message.type === 'user' && message.text === 'edited inspection',
       ),
     );
-    const user = (await fixture.stores.sessionStore.readMessages(fixture.sessionId)).find(
-      (message) => message.type === 'user' && message.text === 'edited inspection',
-    );
+    const user = (
+      await readLedgerMessages(fixture.stores.runtimeEventStore, fixture.sessionId)
+    ).find((message) => message.type === 'user' && message.text === 'edited inspection');
     assert.equal(user?.type, 'user');
     if (user?.type !== 'user') throw new Error('Expected queued directory user message');
     assert.deepEqual(user.directoryReferences, [reference]);
+    // The ledger carries the delivered message before its Turn ends; close only
+    // once that Turn has, so shutdown does not race its terminal fact.
+    await fixture.coordinator.whenIdle(fixture.sessionId);
   } finally {
     release.resolve();
     await fixture.coordinator.close();
