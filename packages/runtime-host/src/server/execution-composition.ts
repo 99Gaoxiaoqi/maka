@@ -966,7 +966,6 @@ export async function createExecutionRuntimeHostComposition(
       }),
       readModel: new RuntimeReadModel({
         runtimeEventStore: stores.runtimeEventStore,
-        projectionCache: stores.sessionStore,
         canonicalPermissionOutcomes,
       }),
       artifacts: openedArtifactStore,
