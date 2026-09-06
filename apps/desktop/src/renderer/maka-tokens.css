@@ -881,6 +881,12 @@
      everything already standing between it and that edge. Two literals would be
      two chances to change one of them. */
   --maka-titlebar-gutter-left: max(var(--space-6), var(--maka-titlebar-area-x));
+  /* Windows caption buttons report their width here; macOS and Linux report 0.
+     Shared by the titlebar strip and the workbar's bar, which hand one collapse
+     toggle back and forth and hold it to the same x. */
+  --maka-titlebar-gutter-right: calc(
+    var(--space-2) + var(--maka-titlebar-overlay-right-width)
+  );
   --maka-titlebar-gap: var(--space-2);
   /* What the strip keeps for itself. This window has no OS title bar, so the
      strip IS the drag handle, and the session breadcrumb is a grid item that

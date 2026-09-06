@@ -17,7 +17,7 @@
  * under the License.
  */
 
-import type { CSSProperties } from 'react';
+import { useState, type CSSProperties } from 'react';
 import type { Decorator, Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import type { ArtifactRecord } from '@maka/core/artifacts';
@@ -27,7 +27,7 @@ import type { SessionSummary } from '@maka/core/session';
 import type { SessionTrace } from '@maka/core/session-trace';
 import type { ContextDiagnosticsResult } from '@maka/runtime-host/protocol';
 import { ToastProvider } from '@maka/ui';
-import { WorkbarServicesProvider } from '../src/renderer/features/workbar';
+import { WorkbarServicesProvider, WorkbarTitlebarActions } from '../src/renderer/features/workbar';
 import { WorkbarSurface } from '../src/renderer/features/workbar/stories';
 import {
   createFakeWorkbarServices,
@@ -928,7 +928,13 @@ function Workbar(props: {
   sourceSession?: SessionSummary;
   /** Overrides the restored column width, the way the resize handle does. */
   width?: number;
+  /**
+   * Lets the column's own collapse toggle and the titlebar's restore
+   * affordance drive `rightCollapsed`, the way the app's reducer does.
+   */
+  collapsible?: boolean;
 }) {
+  const [collapsed, setCollapsed] = useState(false);
   const emptyTabsState = createSessionWorkbarTabsState();
   let tab: SessionWorkbarTab | undefined;
   let quotes: QuoteCompanionPanelState[] | undefined;
@@ -986,13 +992,21 @@ function Workbar(props: {
           ...(props.width ? { '--maka-session-workbar-width': `${props.width}px` } : {}),
         } as CSSProperties}
       >
-        <div className="mainColumn" />
+        <div className="mainColumn">
+          {props.collapsible && (
+            <WorkbarTitlebarActions
+              available
+              collapsed={collapsed}
+              onToggle={() => setCollapsed(false)}
+            />
+          )}
+        </div>
         <WorkbarSurface
           sessionId={SESSION_ID}
           hidden={false}
-          onDismissPanel={noop}
+          onDismissPanel={props.collapsible ? () => setCollapsed(true) : noop}
           panelsState={createSessionWorkbarPanelsState(tabsState)}
-          rightCollapsed={false}
+          rightCollapsed={collapsed}
           bottomOpen={false}
           onActivateTab={noop}
           onCloseTab={noop}
@@ -1053,6 +1067,66 @@ export const SeveralFacesAtColumnFloor: Story = {
   render: () => (
     <Workbar tab="review" alsoOpen={['browser', 'files']} width={320} />
   ),
+};
+
+// Real path: 变更 open → collapse from the bar → restore from the titlebar. The
+// column eases shut and open the way the sidebar does, with the open face
+// riding along instead of vanishing on the first frame, and the collapse
+// toggle sits one `--space-2` in from the plate's edge — the titlebar's
+// gutter on a platform that draws nothing there.
+export const CollapseAndRestore: Story = {
+  decorators: [bridge()],
+  render: () => <Workbar tab="review" collapsible />,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const frame = canvasElement.querySelector<HTMLElement>(
+      '.maka-session-workbar[data-placement="right"]',
+    )!;
+    const panel = canvasElement.querySelector<HTMLElement>(
+      '.maka-session-workbar-panel[data-overlay][data-placement="right"]',
+    )!;
+    const sampleWidths = () =>
+      new Promise<{ frame: number[]; panel: number[] }>((resolve) => {
+        const out = { frame: [] as number[], panel: [] as number[] };
+        const start = performance.now();
+        const tick = () => {
+          out.frame.push(Math.round(frame.getBoundingClientRect().width));
+          out.panel.push(Math.round(panel.getBoundingClientRect().width));
+          if (performance.now() - start < 500) requestAnimationFrame(tick);
+          else resolve(out);
+        };
+        requestAnimationFrame(tick);
+      });
+    const distinct = (values: number[]) => new Set(values).size;
+    const monotonic = (values: number[], direction: 'down' | 'up') =>
+      values.every((value, index) =>
+        index === 0 || (direction === 'down' ? value <= values[index - 1] : value >= values[index - 1]),
+      );
+
+    const collapse = canvas.getByRole('button', { name: '收起任务工作栏' });
+    await canvas.findByRole('region', { name: 'Git 变更' });
+    const open = frame.getBoundingClientRect().width;
+    expect(frame.getBoundingClientRect().right - collapse.getBoundingClientRect().right).toBe(8);
+
+    let sampling = sampleWidths();
+    await userEvent.click(collapse);
+    let widths = await sampling;
+    expect(widths.frame.at(-1)).toBe(0);
+    expect(distinct(widths.frame)).toBeGreaterThanOrEqual(6);
+    expect(monotonic(widths.frame, 'down')).toBe(true);
+    expect(widths.panel).toEqual(widths.frame);
+    await expect(panel).not.toBeVisible();
+
+    const restore = canvas.getByRole('button', { name: '展开任务工作栏' });
+    sampling = sampleWidths();
+    await userEvent.click(restore);
+    widths = await sampling;
+    expect(widths.frame.at(-1)).toBe(open);
+    expect(distinct(widths.frame)).toBeGreaterThanOrEqual(6);
+    expect(monotonic(widths.frame, 'up')).toBe(true);
+    expect(widths.panel).toEqual(widths.frame);
+    await expect(canvas.getByRole('region', { name: 'Git 变更' })).toBeVisible();
+  },
 };
 
 // Real path: 任务工作栏 → 变更 on a session whose branch matches its base. The

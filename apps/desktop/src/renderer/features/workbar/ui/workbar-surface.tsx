@@ -102,6 +102,7 @@ function WorkbarPanelLoading(props: { label: string }) {
 function WorkbarPanel(props: {
   id?: string;
   active: boolean;
+  collapsed?: boolean;
   placement: SessionWorkbarPlacement;
   overlay?: boolean;
   className?: string;
@@ -115,6 +116,7 @@ function WorkbarPanel(props: {
       hidden={!props.active}
       data-placement={props.placement}
       data-overlay={props.overlay || undefined}
+      data-collapsed={props.collapsed || undefined}
       className={
         props.className
           ? `maka-session-workbar-panel ${props.className}`
@@ -465,7 +467,7 @@ export function WorkbarSurface(props: {
                 }
               />
             </div>
-            <WorkbarPanel active={visible && showingLauncher} placement={placement}>
+            <WorkbarPanel active={showingLauncher} placement={placement}>
               <WorkbarLauncher
                 onOpen={(kind) => props.onRequestOpenTab(placement, kind)}
                 sideChatAvailable={props.sourceSession !== undefined}
@@ -480,8 +482,8 @@ export function WorkbarSurface(props: {
         const showingLauncher = panel.launcherOpen || !activeTab;
         const panelVisible =
           placement === 'right' ? !props.rightCollapsed : props.bottomOpen;
-        const active =
-          panelVisible && !showingLauncher && activeTab?.id === tab.id;
+        const selected = !showingLauncher && activeTab?.id === tab.id;
+        const active = panelVisible && selected;
         let content: ReactNode = null;
         if (tab.kind === 'review') {
           content = (
@@ -567,7 +569,8 @@ export function WorkbarSurface(props: {
           <WorkbarPanel
             key={tab.id}
             id={`maka-workbar-panel-${tab.id}`}
-            active={active}
+            active={selected}
+            collapsed={props.hidden || !panelVisible}
             placement={placement}
             overlay
             className={

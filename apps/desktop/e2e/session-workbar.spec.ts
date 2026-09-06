@@ -350,10 +350,14 @@ test('titlebar workbar action restores an existing tool instead of the picker', 
     name: '收起任务工作栏',
   });
   await expect(restoredCollapseButton).toBeVisible();
+  // The column eases open, so the toggle rides in from the right before it
+  // comes to rest where the titlebar's affordance stood.
+  await expect
+    .poll(async () => (await restoredCollapseButton.boundingBox())?.x)
+    .toBeCloseTo(safeAreaToggleBox!.x, 0);
   const restoredToggleBox = await restoredCollapseButton.boundingBox();
   expect(restoredToggleBox).not.toBeNull();
   expect(Math.abs(restoredToggleBox!.y - safeAreaToggleBox!.y)).toBeLessThanOrEqual(1);
-  expect(Math.abs(restoredToggleBox!.x - safeAreaToggleBox!.x)).toBeLessThanOrEqual(1);
 });
 
 test('Git changes re-read the workspace after the app regains focus', async ({
