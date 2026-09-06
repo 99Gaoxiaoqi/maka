@@ -1297,6 +1297,9 @@ export async function createExecutionRuntimeHostComposition(
           throw error;
         }
       },
+      whenSessionExecutionIdle: (sessionId) => coordinator.whenIdle(sessionId),
+      isSessionPaused: async (sessionId) =>
+        (await stores.sessionStore.readHeaderSnapshot(sessionId)).collaborationMode === 'plan',
       acquireResidency: () => context.acquireResidency('agent-graph-supervisor'),
       onError: () => context.requestDrain(),
     });
@@ -1341,6 +1344,9 @@ export async function createExecutionRuntimeHostComposition(
       onCommittedMutation: registerConfigurationMutation,
     });
     const sessionCatalog = new HostSessionCatalogCoordinator({
+      onExecutionResumed: (sessionId) => {
+        void requireGraphSupervisorWake(graphSupervisorWake).notifySessionResumed(sessionId);
+      },
       stores: stores.sessionStore,
       runtimePolicy: runtimePolicyStores,
       manager,
@@ -1592,6 +1598,9 @@ export async function createExecutionRuntimeHostComposition(
       requestDrain: context.requestDrain,
     });
     const plans = new HostPlanCoordinator({
+      onExecutionResumed: (sessionId) => {
+        void requireGraphSupervisorWake(graphSupervisorWake).notifySessionResumed(sessionId);
+      },
       store: openedPlanStore,
       sessions: stores.sessionStore,
       runtime: manager,

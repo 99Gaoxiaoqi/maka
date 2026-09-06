@@ -28,6 +28,7 @@ import {
 } from '@maka/runtime/agent-graph-supervisor-wake';
 import {
   RuntimeHostedRootConflictError,
+  RuntimeHostedRootUnavailableError,
   RuntimeMessageAuthorityInvariantError,
 } from '@maka/runtime/message-authority';
 import { type SessionManager } from '@maka/runtime/session-manager';
@@ -37,6 +38,7 @@ import type {
   HostedExecutionAuthority,
   HostedExecutionSnapshot,
 } from './hosted-execution-authority.js';
+import { PLAN_BACKGROUND_EXECUTION_UNAVAILABLE_REASON } from './host-session-availability.js';
 import {
   waitForHostedExecutionIdleOrAbort,
   waitForHostedExecutionTerminal,
@@ -133,6 +135,12 @@ export class HostAgentGraphExecutionCoordinator {
         break;
       } catch (error) {
         if (gateCancelled) return superseded(input.turnId);
+        if (
+          error instanceof RuntimeHostedRootUnavailableError &&
+          error.message === PLAN_BACKGROUND_EXECUTION_UNAVAILABLE_REASON
+        ) {
+          return { kind: 'paused', turnId: input.turnId, reason: error.message };
+        }
         if (!(error instanceof RuntimeHostedRootConflictError)) throw error;
         const whenIdle = this.#executions.whenIdle(sessionId);
         if (whenIdle) await waitForHostedExecutionIdleOrAbort(whenIdle, abortSignal);
