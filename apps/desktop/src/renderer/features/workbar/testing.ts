@@ -24,7 +24,6 @@ export type {
   WorkbarServices,
   SessionTracePage,
   SessionUsageSummary,
-  WorkbarIngestInput,
 } from './ports.js';
 
 export * from './model/workbar-tabs.js';
@@ -167,7 +166,6 @@ export function createFakeWorkbarServices(
       }),
       retractQueueEntry: async () => undefined,
       promoteQueueEntry: async () => undefined,
-      updateQueueEntry: async () => undefined,
       reorderQueueEntries: async () => undefined,
       setPermissionMode: async () => {
         throw new Error('Fake sideChat.setPermissionMode is not configured');

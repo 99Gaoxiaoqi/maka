@@ -144,7 +144,7 @@ export interface ChatViewGoalIndicatorProps {
 export interface TransientUserMessageProjection {
   deliveryStatus?: string;
   deliveryDetail?: string;
-  deliveryActions?: readonly { label: string; onClick(): void }[];
+  deliveryActions?: readonly { label: string; icon: ReactNode; onClick(): void | Promise<void> }[];
   id: string;
   text: string;
   ts: number;
@@ -152,8 +152,8 @@ export interface TransientUserMessageProjection {
   directoryReferences?: readonly import('@maka/core/events').DirectoryReference[];
   quotes?: readonly QuoteRef[];
   inlineReferences?: readonly InlineReference[];
-  /** Steering and follow-ups stay in the composer queue until the Host takes them. */
-  transientPlacement: 'transcript' | 'steering' | 'follow_up';
+  /** Follow-ups stay in the composer queue until the Host takes them. */
+  transientPlacement: 'transcript' | 'follow_up';
   /** The Host Turn this Message is already bound to, once the Host named one. */
   hostTurnId?: string;
 }

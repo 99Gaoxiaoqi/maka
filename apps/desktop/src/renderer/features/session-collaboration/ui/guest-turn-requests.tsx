@@ -17,4 +17,22 @@
  * under the License.
  */
 
-export { toComposerIngestItems, type PendingAttachment } from './features/conversation/index.js';
+import type { ReactNode, RefObject } from 'react';
+import type { ComposerHandle } from '@maka/ui';
+import {
+  useGuestTurnRequests,
+  type GuestComposerProjection,
+} from '../controller/use-guest-turn-requests.js';
+
+/**
+ * Projects the shared composer for a Guest Session and nothing for an owned
+ * one. It always renders, so switching between the two keeps one Composer and
+ * its drafts.
+ */
+export function GuestTurnRequests(props: {
+  readonly sessionId: string | undefined;
+  readonly composerRef: RefObject<ComposerHandle | null>;
+  readonly children: (guest: GuestComposerProjection | undefined) => ReactNode;
+}) {
+  return <>{props.children(useGuestTurnRequests(props.sessionId, props.composerRef))}</>;
+}
