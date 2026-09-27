@@ -4283,7 +4283,7 @@ test('active WorkHub authority reads the admitted v2 input and refuses other or 
   }
 });
 
-test('Client Capability ambiguity fails before durable root admission', async () => {
+test('unrelated Client Capability publishers do not block a root Turn', async () => {
   const clientCapabilities = new HostClientCapabilityCoordinator({
     ...clientCapabilityCoordinatorTestAdmission(),
     activation: new RuntimePolicyActivationGate(),
@@ -4306,6 +4306,10 @@ test('Client Capability ambiguity fails before durable root admission', async ()
     {
       send: async () => {},
     },
+  );
+  const observer = clientCapabilities.attachConnection(
+    clientCapabilityConnectionIdentity('observer'),
+    { send: async () => {} },
   );
 
   try {
@@ -4343,19 +4347,89 @@ test('Client Capability ambiguity fails before durable root admission', async ()
       {
         sessionId: fixture.sessionId,
         turnId,
-        content: { text: 'must not be admitted' },
+        content: { text: 'start without unrelated MCP tools' },
       },
       operationContext(fixture.hostEpoch, fixture.acquireResidency, 'observer'),
     );
-    assert.equal(started.ok, false);
-    if (!started.ok) assert.equal(started.error.code, 'operation_conflict');
-    assert.equal(
-      await fixture.stores.agentRunStore.readRootTurnAdmission(fixture.sessionId, turnId),
-      undefined,
-    );
+    assert.equal(started.ok, true);
+    assert.equal(clientCapabilities.snapshotForSession(fixture.sessionId), undefined);
+    assert.ok(await fixture.stores.agentRunStore.readRootTurnAdmission(fixture.sessionId, turnId));
   } finally {
+    observer.close();
     first.close();
     second.close();
+    await clientCapabilities.close();
+    await fixture.dispose();
+  }
+});
+
+test('Host-owned idle message submission starts a Turn without a Client initiator', async () => {
+  const clientCapabilities = new HostClientCapabilityCoordinator({
+    ...clientCapabilityCoordinatorTestAdmission(),
+    activation: new RuntimePolicyActivationGate(),
+    onModelToolsChanged: () => undefined,
+  });
+  const fixture = await createFailureFixture({
+    clientCapabilities,
+    registerBackend: (backends) => {
+      backends.register('ai-sdk', (context) => new FakeBackend(context));
+    },
+  });
+  const provider = clientCapabilities.attachConnection(
+    clientCapabilityConnectionIdentity('provider-a'),
+    { send: async () => {} },
+  );
+
+  try {
+    const replaced = await clientCapabilities.handlers['client.capability.replace'](
+      {
+        registrationId: 'plugin-agent-provider',
+        offers: [
+          {
+            offerId: 'opaque',
+            version: '0',
+            affinity: 'session',
+            hostPathAccess: 'cwd',
+            label: 'Opaque',
+            tools: [{ serverId: 'opaque', name: 'inspect', inputSchema: { type: 'object' } }],
+          },
+        ],
+      },
+      operationContext(fixture.hostEpoch, fixture.acquireResidency, 'provider-a'),
+    );
+    assert.equal(replaced.ok, true);
+    const submitted = await fixture.messages.handlers['turn.message.submit'](
+      {
+        originHostEpoch: fixture.hostEpoch,
+        sessionId: fixture.sessionId,
+        messageId: 'plugin-agent-followup',
+        content: { text: 'Continue the agent task.' },
+        placement: 'current_turn',
+      },
+      {
+        hostEpoch: fixture.hostEpoch,
+        connectionId: 'plugin-agent',
+        principal: 'runtime_host',
+        acquireResidency: fixture.acquireResidency,
+      },
+    );
+    assert.equal(submitted.ok, true, JSON.stringify(submitted));
+    if (!submitted.ok) return;
+    assert.equal(submitted.result.disposition, 'turn_started');
+    if (submitted.result.disposition !== 'turn_started') return;
+    const snapshot = clientCapabilities.snapshotForSession(fixture.sessionId);
+    assert.deepEqual(snapshot?.registrationIds, ['plugin-agent-provider']);
+    snapshot?.release();
+    assert.ok(
+      await fixture.stores.agentRunStore.readRootTurnAdmission(
+        fixture.sessionId,
+        submitted.result.turnId,
+      ),
+    );
+    await fixture.coordinator.whenIdle(fixture.sessionId);
+  } finally {
+    await fixture.coordinator.close();
+    provider.close();
     await clientCapabilities.close();
     await fixture.dispose();
   }
