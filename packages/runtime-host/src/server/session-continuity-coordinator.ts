@@ -1000,8 +1000,10 @@ export class SessionContinuityCoordinator implements SessionContinuityService {
             transcript = created.state;
             transcriptBootstrap = created.bootstrap;
           } catch (error) {
-            // The client can only retry, but a projection that outgrew its
-            // bounds is a Host defect and has to leave a trace here.
+            // Record the cause before the publication-failure hook can drain the Host.
+            console.error(
+              `[runtime-host] subscription.open transcript bootstrap failed: ${boundedFailureDiagnostic(error)}`,
+            );
             this.onPublicationFailure(error);
             return {
               ok: false as const,
