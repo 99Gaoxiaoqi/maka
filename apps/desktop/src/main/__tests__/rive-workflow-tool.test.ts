@@ -268,8 +268,8 @@ async function withFakeRive(
 ): Promise<void> {
   const cwd = await mkdtemp(join(tmpdir(), 'maka-rive-tool-'));
   try {
-    // Node treats the first Rive subcommand as a script path. This exercises a
-    // real shell-free child process on every platform without a shell shim.
+    // Node runs the first Rive subcommand as a script, giving a shell-free child
+    // on every platform; keep this list in sync with rive-cli.ts subcommands.
     for (const command of ['workflow', 'scheduler', 'work', 'branch']) {
       await writeFile(join(cwd, command), fakeRiveScript(mode), 'utf8');
     }
